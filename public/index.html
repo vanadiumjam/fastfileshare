@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100% 작동하는 파일 공유</title>
+    <style>
+        #progressContainer {
+            width: 100%;
+            background-color: #f3f3f3;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+        #progressBar {
+            width: 0;
+            height: 20px;
+            background-color: #4caf50;
+        }
+        #progressText {
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Fast File Share</h1>
+        <p>No Virus, No Spyware, No Adware, No Malware, No Ads, No Limits, No Subscription, No Tracking, No Fee, No Register, No Login, No Watermarks, Clean, Fast, Easy, Secure, Free, 100% Working</p>
+        <h1>파일 보내기</h1>
+        <input type="file" id="fileInput">
+        <button onclick="uploadFile()">업로드</button>
+        <p id="uploadStatus"></p>
+        <div id="progressContainer" style="display: none;">
+            <div id="progressBar"></div>
+            <p id="progressText">0%</p>
+        </div>
+        <p id="codeDisplay"></p>
+        <hr>
+        <h1>파일 받기</h1>
+        <input type="text" id="codeInput" placeholder="코드 입력">
+        <button onclick="downloadFile()">다운로드</button>
+        <div id="downloadProgressContainer" style="display: none;">
+            <div id="downloadProgressBar"></div>
+            <p id="downloadProgressText">0%</p>
+        </div>
+    </main>
+    <hr>
+    <p>인증 코드는 5분 후 만료됩니다.</p>
+    <p>서버에 업로드된 파일은 24시간 후 자동으로 삭제됩니다.</p>
+    <p>파일은 최대 100MB까지 업로드할 수 있습니다.</p>
+    <p>어떠한 데이터도 제 3자에게 공유하지 않습니다.</p>
+    <hr>
+    <footer>
+        <p>© 2025 Fast File Share. All rights reserved.</p>
+        <p>First Release - 2025.2.27</p>
+    </footer>
+
+    <script>
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadStatus = document.getElementById('uploadStatus');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const file = fileInput.files[0];
+
+            // 파일 크기 체크 (100MB 제한)
+            const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+            if (file.size > maxSize) {
+                alert('파일 크기는 100MB 이하로 제한됩니다.');
+                return;
+            }
+
+            // 업로드 중 텍스트와 프로그래스 바 표시
+            uploadStatus.innerText = '업로드 중...';
+            progressContainer.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const xhr = new XMLHttpRequest();
+
+            // 진행 상태 업데이트
+            xhr.upload.onprogress = function(event) {
+                if (event.lengthComputable) {
+                    const percent = (event.loaded / event.total) * 100;
+                    progressBar.style.width = percent + '%';
+                    progressText.innerText = Math.round(percent) + '%';
+                }
+            };
+
+            // 업로드가 완료되면
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const result = JSON.parse(xhr.responseText);
+                    uploadStatus.innerText = `업로드 완료. 코드: ${result.code}`;
+                    document.getElementById('codeDisplay').innerText = `코드: ${result.code}`;
+                } else {
+                    uploadStatus.innerText = '업로드 실패. 다시 시도해주세요.';
+                }
+            };
+
+            // 요청 실패 시
+            xhr.onerror = function() {
+                uploadStatus.innerText = '요청 실패. 다시 시도해주세요.';
+            };
+
+            xhr.open('POST', '/upload', true);
+            xhr.send(formData);
+        }
+
+        function downloadFile() {
+            const code = document.getElementById('codeInput').value;
+            const downloadProgressContainer = document.getElementById('downloadProgressContainer');
+            const downloadProgressBar = document.getElementById('downloadProgressBar');
+            const downloadProgressText = document.getElementById('downloadProgressText');
+            
+            // 다운로드 진행 표시
+            downloadProgressContainer.style.display = 'block';
+
+            const xhr = new XMLHttpRequest();
+            xhr.responseType = 'blob';
+
+            // 다운로드 진행 상태 업데이트
+            xhr.onprogress = function(event) {
+                if (event.lengthComputable) {
+                    const percent = (event.loaded / event.total) * 100;
+                    downloadProgressBar.style.width = percent + '%';
+                    downloadProgressText.innerText = Math.round(percent) + '%';
+                }
+            };
+
+            // 다운로드가 완료되면
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const blob = xhr.response;
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = "FastFileShare_DownloadedFile_" + String(Date.now()) + "_" + String(Math.floor(Math.random() * 10000));
+                    link.click();
+                    downloadProgressContainer.style.display = 'none'; // 다운로드 완료 후 프로그래스 바 숨기기
+                } else {
+                    downloadProgressText.innerText = '다운로드 실패';
+                }
+            };
+
+            // 요청 실패 시
+            xhr.onerror = function() {
+                downloadProgressText.innerText = '요청 실패';
+            };
+
+            xhr.open('GET', `/download/${code}`, true);
+            xhr.send();
+        }
+    </script>
+</body>
+</html>
