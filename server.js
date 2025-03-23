@@ -9,7 +9,7 @@ app.use(express.static('public'));
 app.use(fileUpload());
 
 const files = {};
-const CODE_EXPIRATION_TIME = 5 * 60 * 1000; // 5분 후 코드 만료
+const CODE_EXPIRATION_TIME = 10 * 60 * 1000; // 10분 후 코드 만료
 const FILE_EXPIRATION_TIME = 24 * 60 * 60 * 1000; // 24시간 후 파일 삭제
 
 // 루트 경로 처리
