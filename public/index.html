@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,11 +12,13 @@
             border: 1px solid #ccc;
             margin-top: 10px;
         }
+
         #progressBar {
             width: 0;
             height: 20px;
             background-color: #4caf50;
         }
+
         #progressText {
             text-align: center;
             font-size: 14px;
@@ -23,10 +26,12 @@
         }
     </style>
 </head>
+
 <body>
     <main>
         <h1>Fast File Share</h1>
-        <p>No Virus, No Spyware, No Adware, No Malware, No Ads, No Limits, No Subscription, No Tracking, No Fee, No Register, No Login, No Watermarks, Clean, Fast, Easy, Secure, Free, 100% Working</p>
+        <p>No Virus, No Malware, No scam, 100% working, Secure, Fast</p>
+        <p><p style="font-weight: bold; color: red;">경고!</p> 서로 다른 두 사용자가 동시에 파일을 업로드한다면 <p style="font-weight: bold; color: red;">치명적 오류</p>가 발생할 수 있습니다</p>
         <h1>파일 보내기</h1>
         <input type="file" id="fileInput">
         <button onclick="uploadFile()">업로드</button>
@@ -36,6 +41,7 @@
             <p id="progressText">0%</p>
         </div>
         <p id="codeDisplay"></p>
+        <p id="expirationTimer" style="font-weight: bold; color: red;"></p>
         <hr>
         <h1>파일 받기</h1>
         <input type="text" id="codeInput" placeholder="코드 입력">
@@ -82,7 +88,7 @@
             const xhr = new XMLHttpRequest();
 
             // 진행 상태 업데이트
-            xhr.upload.onprogress = function(event) {
+            xhr.upload.onprogress = function (event) {
                 if (event.lengthComputable) {
                     const percent = (event.loaded / event.total) * 100;
                     progressBar.style.width = percent + '%';
@@ -91,18 +97,22 @@
             };
 
             // 업로드가 완료되면
-            xhr.onload = function() {
+            xhr.onload = function () {
                 if (xhr.status === 200) {
                     const result = JSON.parse(xhr.responseText);
                     uploadStatus.innerText = `업로드 완료. 코드: ${result.code}`;
                     document.getElementById('codeDisplay').innerText = `코드: ${result.code}`;
+
+                    // 10분 타이머 시작
+                    startCountdown(10 * 60); // 10분 (초 단위)
                 } else {
                     uploadStatus.innerText = '업로드 실패. 다시 시도해주세요.';
                 }
             };
 
+
             // 요청 실패 시
-            xhr.onerror = function() {
+            xhr.onerror = function () {
                 uploadStatus.innerText = '요청 실패. 다시 시도해주세요.';
             };
 
@@ -115,7 +125,7 @@
             const downloadProgressContainer = document.getElementById('downloadProgressContainer');
             const downloadProgressBar = document.getElementById('downloadProgressBar');
             const downloadProgressText = document.getElementById('downloadProgressText');
-            
+
             // 다운로드 진행 표시
             downloadProgressContainer.style.display = 'block';
 
@@ -123,7 +133,7 @@
             xhr.responseType = 'blob';
 
             // 다운로드 진행 상태 업데이트
-            xhr.onprogress = function(event) {
+            xhr.onprogress = function (event) {
                 if (event.lengthComputable) {
                     const percent = (event.loaded / event.total) * 100;
                     downloadProgressBar.style.width = percent + '%';
@@ -132,12 +142,13 @@
             };
 
             // 다운로드가 완료되면
-            xhr.onload = function() {
+            xhr.onload = function () {
                 if (xhr.status === 200) {
                     const blob = xhr.response;
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
-                    link.download = "FastFileShare_DownloadedFile_" + String(Date.now()) + "_" + String(Math.floor(Math.random() * 10000));
+                    link.download = "FastFileShare_DownloadedFile_" + String(Date.now()) + "_" + String(Math.floor(
+                        Math.random() * 10000));
                     link.click();
                     downloadProgressContainer.style.display = 'none'; // 다운로드 완료 후 프로그래스 바 숨기기
                 } else {
@@ -146,13 +157,33 @@
             };
 
             // 요청 실패 시
-            xhr.onerror = function() {
+            xhr.onerror = function () {
                 downloadProgressText.innerText = '요청 실패';
             };
 
             xhr.open('GET', `/download/${code}`, true);
             xhr.send();
         }
+
+        function startCountdown(seconds) {
+            const timerDisplay = document.getElementById('expirationTimer');
+
+            function updateTimer() {
+                const minutes = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                timerDisplay.innerText =
+                    `남은 시간: ${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                if (seconds <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.innerText = '코드가 만료되었습니다.';
+                }
+                seconds--;
+            }
+
+            updateTimer(); // 초기 실행
+            const timerInterval = setInterval(updateTimer, 1000);
+        }
     </script>
 </body>
+
 </html>
