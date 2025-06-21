@@ -60,16 +60,32 @@ app.post('/upload', (req, res) => {
 
 // 파일 다운로드 엔드포인트
 app.get('/download/:code', (req, res) => {
-    let code = req.params.code;
-    let fileData = files[code];
+    const code = req.params.code;
+    const fileData = files[code];
 
     if (!fileData) {
         return res.status(404).send('Invalid code or file not found.');
     }
 
     res.download(fileData.path, fileData.uuidName, (err) => {
-        if (!err) delete files[code]; // 다운로드 후 코드 삭제
+        if (!err) {
+            fileData.downloaded = true; // 다운로드 기록
+            delete files[code];         // 코드 삭제는 유지
+        }
     });
+});
+
+
+// 파일 상태 확인용 엔드포인트
+app.get('/status/:code', (req, res) => {
+    const code = req.params.code;
+    const fileData = files[code];
+
+    if (!fileData) {
+        return res.status(404).json({ exists: false });
+    }
+
+    res.json({ exists: true, downloaded: !!fileData.downloaded });
 });
 
 
