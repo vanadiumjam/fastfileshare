@@ -31,7 +31,8 @@
     <main>
         <h1>Fast File Share</h1>
         <p>No Virus, No Malware, No scam, 100% working, Secure, Fast</p>
-        <p><span style="font-weight: bold; color: red;">경고!</span> 서로 다른 두 사용자가 동시에 파일을 업로드한다면 <span style="font-weight: bold; color: red;">치명적 오류</span>가 발생할 수 있습니다</p>
+        <p><span style="font-weight: bold; color: red;">경고!</span> 서로 다른 두 사용자가 동시에 파일을 업로드한다면 <span
+                style="font-weight: bold; color: red;">치명적 오류</span>가 발생할 수 있습니다</p>
         <h1>파일 보내기</h1>
         <input type="file" id="fileInput">
         <button onclick="uploadFile()">업로드</button>
@@ -144,16 +145,25 @@
             xhr.onload = function () {
                 if (xhr.status === 200) {
                     const blob = xhr.response;
+                    const disposition = xhr.getResponseHeader("Content-Disposition");
+                    let filename = "downloaded_file";
+
+                    // Content-Disposition 헤더에서 파일명 추출
+                    if (disposition && disposition.indexOf("filename=") !== -1) {
+                        const matches = /filename="?([^"]+)"?/.exec(disposition);
+                        if (matches != null && matches[1]) filename = matches[1];
+                    }
+
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
-                    link.download = "FastFileShare_DownloadedFile_" + String(Date.now()) + "_" + String(Math.floor(
-                        Math.random() * 10000));
+                    link.download = filename;
                     link.click();
-                    downloadProgressContainer.style.display = 'none'; // 다운로드 완료 후 프로그래스 바 숨기기
+                    downloadProgressContainer.style.display = 'none';
                 } else {
                     downloadProgressText.innerText = '다운로드 실패';
                 }
             };
+
 
             // 요청 실패 시
             xhr.onerror = function () {

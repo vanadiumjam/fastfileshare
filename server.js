@@ -12,6 +12,8 @@ const files = {};
 const CODE_EXPIRATION_TIME = 10 * 60 * 1000; // 10분 후 코드 만료
 const FILE_EXPIRATION_TIME = 24 * 60 * 60 * 1000; // 24시간 후 파일 삭제
 
+const { v4: uuidv4 } = require('uuid');
+
 // 루트 경로 처리
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -24,23 +26,25 @@ app.post('/upload', (req, res) => {
     }
 
     let uploadedFile = req.files.file;
-    let code = Math.floor(Math.random() * 10000); // 4자리 숫자 코드 생성
-    let filePath = path.join(__dirname, 'uploads', uploadedFile.name);
+    let code = Math.floor(Math.random() * 10000); // 4자리 숫자 코드
+    let extension = path.extname(uploadedFile.name); // 원본 확장자 유지
+    let uuidFileName = `${uuidv4()}${extension}`;
+    let filePath = path.join(__dirname, 'uploads', uuidFileName);
 
     uploadedFile.mv(filePath, (err) => {
         if (err) return res.status(500).send(err);
 
         files[code] = {
             path: filePath,
+            originalName: uploadedFile.name,
+            uuidName: uuidFileName,
             timestamp: Date.now()
         };
 
-        // 코드 만료 (5분 후)
-        setTimeout(() => {
-            delete files[code];
-        }, CODE_EXPIRATION_TIME);
+        // 코드 만료
+        setTimeout(() => delete files[code], CODE_EXPIRATION_TIME);
 
-        // 파일 삭제 (24시간 후)
+        // 파일 삭제
         setTimeout(() => {
             if (fs.existsSync(filePath)) {
                 fs.unlink(filePath, (err) => {
@@ -49,7 +53,7 @@ app.post('/upload', (req, res) => {
             }
         }, FILE_EXPIRATION_TIME);
 
-        res.send({ code: code });
+        res.send({ code });
     });
 });
 
@@ -63,10 +67,11 @@ app.get('/download/:code', (req, res) => {
         return res.status(404).send('Invalid code or file not found.');
     }
 
-    res.download(fileData.path, (err) => {
+    res.download(fileData.path, fileData.uuidName, (err) => {
         if (!err) delete files[code]; // 다운로드 후 코드 삭제
     });
 });
+
 
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
