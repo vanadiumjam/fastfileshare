@@ -104,7 +104,7 @@
                     document.getElementById('codeDisplay').innerText = `코드: ${result.code}`;
 
                     // 10분 타이머 시작
-                    startCountdown(10 * 60, result.code);
+                    startCountdown(10 * 60); // 10분 (초 단위)
                 } else {
                     uploadStatus.innerText = '업로드 실패. 다시 시도해주세요.';
                 }
@@ -174,40 +174,23 @@
             xhr.send();
         }
 
-        function startCountdown(seconds, code) {
+        function startCountdown(seconds) {
             const timerDisplay = document.getElementById('expirationTimer');
-            const codeDisplay = document.getElementById('codeDisplay');
-
-            let timerInterval = setInterval(updateTimer, 1000);
-            let statusInterval = setInterval(checkDownloadStatus, 2000); // 2초마다 확인
 
             function updateTimer() {
                 const minutes = Math.floor(seconds / 60);
                 const secs = seconds % 60;
-                timerDisplay.innerText = `남은 시간: ${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                timerDisplay.innerText =
+                    `남은 시간: ${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
                 if (seconds <= 0) {
                     clearInterval(timerInterval);
-                    clearInterval(statusInterval);
                     timerDisplay.innerText = '코드가 만료되었습니다.';
                 }
                 seconds--;
             }
 
-            function checkDownloadStatus() {
-                fetch(`/status/${code}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.exists && data.downloaded) {
-                            clearInterval(timerInterval);
-                            clearInterval(statusInterval);
-                            timerDisplay.innerText = '';
-                            codeDisplay.innerHTML +=
-                                `<br><span style="color: green; font-weight: bold;">누군가 다운로드했습니다</span>`;
-                        }
-                    });
-            }
-
-            updateTimer(); // 최초 실행
+            updateTimer(); // 초기 실행
+            const timerInterval = setInterval(updateTimer, 1000);
         }
     </script>
 </body>
